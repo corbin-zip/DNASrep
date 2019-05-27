@@ -2,6 +2,7 @@
 /*
     DNASrep - DNAS replacement server
     Copyright (C) 2016  the_fog@1337.rip
+              (C) 2019  no23@deathless.net
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published by
@@ -17,7 +18,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-  function encrypt3($data, $offset, $length, $des_key1, $des_key2, $des_key3, $xor_seed) {
+  function encrypt3n($data, $offset, $length, $des_key1, $des_key2, $des_key3, $xor_seed) {
     $key = $xor_seed;
 
     for($i=0; $i<$length; $i=$i+8) {
@@ -26,9 +27,9 @@
         $dat[$t] = $dat[$t] ^ $key[$t];
       }
 
-      $enc = mcrypt_encrypt(MCRYPT_DES, $des_key1, $dat, MCRYPT_MODE_ECB);
-      $enc = mcrypt_decrypt(MCRYPT_DES, $des_key2, $enc, MCRYPT_MODE_ECB);
-      $enc = mcrypt_encrypt(MCRYPT_DES, $des_key3, $enc, MCRYPT_MODE_ECB);
+      $enc = substr(base64_decode(openssl_encrypt($dat, "des-ecb", $des_key1)), 0, 8);
+      $enc = openssl_decrypt($enc, "des-ecb", $des_key2, OPENSSL_RAW_DATA|OPENSSL_ZERO_PADDING);
+      $enc = substr(base64_decode(openssl_encrypt($enc, "des-ecb", $des_key3)), 0, 8);
 
       for($t=0; $t<8; $t++) {
         $data[$offset+$i+$t] = $enc[$t];
@@ -58,10 +59,10 @@
   // step 1 - prepare the answer
   if($packet = file_get_contents('./packets/'.$fname)) {
     // step 2 - encrypt with keyset from query packet
-    $packet = encrypt3($packet, 0xc8, 0x20, $des_key1, $des_key2, $des_key3, $xor_seed);
+    $packet = encrypt3n($packet, 0xc8, 0x20, $des_key1, $des_key2, $des_key3, $xor_seed);
 
     // step 3 - encrypt with envelope keyset
-    $packet = encrypt3($packet, 0x28, 0x120, pack("H*", "eb711416cb0ab016"), pack("H*", "ae190174b5ce6339"), pack("H*", "7b01b91880145e34"), pack("H*", "c510a6400a9b022f"));
+    $packet = encrypt3n($packet, 0x28, 0x120, pack("H*", "eb711416cb0ab016"), pack("H*", "ae190174b5ce6339"), pack("H*", "7b01b91880145e34"), pack("H*", "c510a6400a9b022f"));
   }
   else {
     $packet = file_get_contents('./error.raw');

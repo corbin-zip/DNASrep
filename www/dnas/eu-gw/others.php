@@ -2,6 +2,7 @@
 /*
     DNASrep - DNAS replacement server
     Copyright (C) 2016  the_fog@1337.rip
+              (C) 2019  no23@deathless.net
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published by
